@@ -1,34 +1,40 @@
-name: SE333_CI
+name: SE333 CI
+
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
 
 jobs:
-  SE333_CI_JOB:
+  build-test:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout-repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: setupJava
+      - name: Set up Temurin JDK 21
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '21'
-          distribution: 'temurin'
-          architecture: x64
+          cache: maven
 
-      - name: Install Linter
-        ##TODO
+      - name: Build, test, and generate reports
+        run: mvn -q -B -ntp clean verify
 
-      - name: Run Checkstyle
-        ##TODO
+      - name: Upload JaCoCo & Checkstyle reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            target/site/jacoco/
+            target/site/checkstyle.html
+            target/surefire-reports/
 
-      - name: Upload Checkstyle Result
-        ##TODO
-
-      - name: Run Maven Test
-        ##TODO
-
-      - name: Jacoco Report
-        ##TODO
+      - name: Upload built JAR
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: target/*-SNAPSHOT.jar
